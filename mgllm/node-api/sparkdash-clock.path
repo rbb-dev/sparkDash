@@ -1,0 +1,12 @@
+# sparkdash-clock: apply the GPU clock limit sparkdash-api asks for (mgllm; installed by
+# scripts/install-node-api.sh). sparkdash-api (unprivileged) writes /run/sparkdash-api/clock-request; closing it
+# starts sparkdash-clock.service (root), which accepts only the five limits and writes /run/sparkdash-clock/state.
+[Unit]
+Description=sparkdash-clock: apply the GPU clock limit sparkdash-api asks for
+
+[Path]
+PathChanged=/run/sparkdash-api/clock-request
+Unit=sparkdash-clock.service
+
+[Install]
+WantedBy=multi-user.target

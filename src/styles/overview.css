@@ -868,3 +868,29 @@
 .ov .ov-help:focus-visible {
   opacity: 1;
 }
+
+/* mgllm: the GPU clock control beside the head's role pill (ClockCap.tsx): a select drawn as a tag, with a chevron,
+   as wide as its longest option (index.css gives every select width: 100%, which would take the whole head row) */
+.ov .ov-clockcap {
+  flex: none;
+  width: auto;
+  appearance: none;
+  border: 0;
+  cursor: pointer;
+  font-family: inherit;
+  line-height: inherit;
+  padding-right: 22px;
+  background-image: linear-gradient(45deg, transparent 50%, currentColor 50%),
+    linear-gradient(135deg, currentColor 50%, transparent 50%);
+  background-position: calc(100% - 12px) 55%, calc(100% - 8px) 55%;
+  background-size: 4px 4px, 4px 4px;
+  background-repeat: no-repeat;
+}
+.ov .ov-clockcap:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 1px;
+}
+.ov .ov-clockcap:disabled {
+  opacity: 0.6;
+  cursor: progress;
+}

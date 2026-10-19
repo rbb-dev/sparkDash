@@ -1,3 +1,4 @@
+import { useReadOnly } from "../../api/deployment";
 import { useState } from "react";
 import type { NetworkMetrics } from "../../api/types";
 import { updateDisabledInterfaces } from "../../api/client";
@@ -41,6 +42,7 @@ export function NetworkPanel({
   className,
 }: NetworkPanelProps) {
   const [showSettings, setShowSettings] = useState(false);
+  const readOnly = useReadOnly(); // mgllm: choosing adapters writes: hidden when read-only
   const [saving, setSaving] = useState(false);
 
   const interfaces = network?.interfaces ?? [];
@@ -89,7 +91,7 @@ export function NetworkPanel({
       className={`panel-network ${className ?? ""}`}
       bodyClassName="sp-stack"
       actions={
-        <button
+        readOnly ? undefined : <button
           type="button"
           title={showSettings ? "Done" : "Interface settings"}
           onClick={() => setShowSettings(!showSettings)}

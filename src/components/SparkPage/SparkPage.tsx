@@ -1,3 +1,4 @@
+import { useReadOnly } from "../../api/deployment";
 import { useState, useEffect, useCallback, type CSSProperties, type ReactNode } from "react";
 import type { SparkSnapshot } from "../../api/types";
 import { isLlmMonitoringEnabled } from "../../api/sparkRole";
@@ -143,7 +144,8 @@ export function SparkPage({
   const showSvc = showServices && view !== "resources";
   // Models you start/stop with your own start.sh / stop.sh. Shown on every Spark and in every tab,
   // so it is always easy to find (a worker may have its own scripts too).
-  const modelsPanel = <LlmModelsPanel spark={spark} />;
+  const readOnly = useReadOnly(); // mgllm: launchers start and stop models over SSH: hidden when read-only
+  const modelsPanel = readOnly ? null : <LlmModelsPanel spark={spark} />;
   const primaryPort = llmPorts[0];
   const extraPorts = llmPorts.slice(1);
   const unified = metrics.unifiedMemory;

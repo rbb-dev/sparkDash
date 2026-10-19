@@ -832,9 +832,13 @@ export class LlmProbe {
     // TensorFold: no Prometheus. /health carries cumulative token totals when the
     // server publishes them; without them tok/s stays 0 rather than guessing.
     if (this.backendType === "tensorfold") {
+      // mgllm: Engine tile. TensorFold has no sleep mode: while /health answers, its weights are loaded and it is
+      // Active (as the SGLang and q27 paths report); otherwise the state is unknown, read again every poll.
+      this.gpuMemoryUtilization = null;
       try {
         const healthRes = await this._fetch(`${this.baseUrl}/health`);
         if (healthRes.ok) {
+          this.gpuMemoryUtilization = 1;
           const health = await healthRes.json().catch(() => null);
           this._applyTensorFoldHealth(health, dtSec);
           this._applyTensorFoldLive(health);

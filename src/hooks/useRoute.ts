@@ -1,6 +1,7 @@
 import { withPageTransition } from "./pageTransition";
 import { useEffect, useCallback, useMemo, useState } from "react";
 import { idToPath, pathToId } from "../constants";
+import { stripBase } from "../api/base";
 
 export type RouteMode = "app" | "showcase";
 
@@ -10,8 +11,8 @@ export interface AppRoute {
   showcaseSparkId: string | null;
 }
 
-function parsePath(pathname: string): AppRoute {
-  const showcase = pathname.match(/^\/showcase\/([^/]+)/);
+export function parsePath(pathname: string): AppRoute {
+  const showcase = stripBase(pathname).match(/^\/showcase\/([^/]+)/);
   if (showcase) {
     return {
       mode: "showcase",

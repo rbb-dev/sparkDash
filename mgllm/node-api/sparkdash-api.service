@@ -1,0 +1,44 @@
+# sparkdash-api: sparkDash's monitoring questions answered on this Spark, read-only, without running a command
+# (mgllm/node-api in the mgllm repo; installed by mgllm/scripts/install-node-api.sh).
+# Who may connect: IPAddressAllow below (the gateway over the tunnel, and localhost); what it listens on and its
+# token are in /etc/sparkdash-api/env (root, 0600).
+[Unit]
+Description=sparkdash-api: sparkDash's monitoring answers (/proc, /sys, NVML, the kernel journal) and GPU clock requests (unprivileged)
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+User=sparkdash-api
+Group=sparkdash-api
+# the kernel journal (journalctl -k's answers)
+SupplementaryGroups=systemd-journal
+EnvironmentFile=/etc/sparkdash-api/env
+# the GPU clock control's request file (read by sparkdash-clock, root); kept across restarts of this service
+RuntimeDirectory=sparkdash-api
+RuntimeDirectoryMode=0755
+RuntimeDirectoryPreserve=yes
+ExecStart=/usr/bin/python3 /opt/sparkdash-api/sparkdash_api.py
+# restarted whenever it stops
+Restart=always
+RestartSec=5
+# measured 46 MB resident, 59 MB peak (node1, 2026-10-10)
+MemoryMax=128M
+IPAddressDeny=any
+# the gateway over the tunnel (wg0 hub), and localhost for checks
+IPAddressAllow=localhost 192.0.2.1   # the dashboard host's address (a documentation address: set yours)
+NoNewPrivileges=yes
+CapabilityBoundingSet=
+AmbientCapabilities=
+ProtectSystem=strict
+ProtectHome=read-only
+PrivateTmp=yes
+ProtectKernelModules=yes
+ProtectKernelTunables=yes
+ProtectControlGroups=yes
+RestrictSUIDSGID=yes
+RestrictRealtime=yes
+LockPersonality=yes
+RestrictAddressFamilies=AF_INET AF_INET6 AF_UNIX AF_NETLINK
+
+[Install]
+WantedBy=multi-user.target

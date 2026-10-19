@@ -1,4 +1,6 @@
+import { useReadOnly } from "../../api/deployment";
 import { benchId } from "../../constants";
+import { withBase } from "../../api/base";
 import { BenchIcon } from "../bench/BenchIcon";
 import { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import type { LlmMetrics, LlmBenchTarget } from "../../api/types";
@@ -117,6 +119,7 @@ function LlmLaunchers({
   onRemoteLaunch: (kind: BenchKind, target: LlmBenchTarget) => void;
 }) {
   const [remoteOpen, setRemoteOpen] = useState(false);
+  const readOnly = useReadOnly(); // mgllm: benchmarks, Showcase and Remote all write: hidden when read-only
   const [hostDraft, setHostDraft] = useState(() => readStoredRemote().host);
   const [portDraft, setPortDraft] = useState(() => readStoredRemote().port);
   const [tls, setTls] = useState(() => readStoredRemote().tls);
@@ -160,6 +163,7 @@ function LlmLaunchers({
   const localHint =
     "Runs against this Spark’s LLM. Remote units use LAN HTTP, or an SSH tunnel to loopback if the server only listens on 127.0.0.1.";
 
+  if (readOnly) return null;
   return (
     <div className="sp-launchers">
       <div className="sp-btns">
@@ -190,7 +194,7 @@ function LlmLaunchers({
             if (llmPort) params.set("port", String(llmPort));
             if (modelId) params.set("model", modelId);
             const q = params.toString() ? `?${params.toString()}` : "";
-            window.open(`/showcase/${encodeURIComponent(sparkId)}${q}`, "_blank", "noopener,noreferrer");
+            window.open(withBase(`/showcase/${encodeURIComponent(sparkId)}${q}`), "_blank", "noopener,noreferrer");
           }}
           className="btn btn--sm"
         >
@@ -398,6 +402,7 @@ export function LlmPanel({
   const [engineInfoOpen, setEngineInfoOpen] = useState(false);
   const [openBench, setOpenBench] = useState<BenchKind | null>(null);
   const [remoteTarget, setRemoteTarget] = useState<LlmBenchTarget | null>(null);
+  const readOnly = useReadOnly(); // mgllm: the port and key settings write: hidden when read-only
   const launchLocal = useCallback((kind: BenchKind) => {
     setRemoteTarget(null);
     setOpenBench(kind);
@@ -573,7 +578,7 @@ export function LlmPanel({
               </Tag>
             </>
           )}
-          {onRemovePort && (
+          {onRemovePort && !readOnly && (
             <button
               type="button"
               title={`Remove port ${llmPort}`}
@@ -584,7 +589,7 @@ export function LlmPanel({
               <span>Remove</span>
             </button>
           )}
-          <button
+          {!readOnly && <button
             type="button"
             title={showSettings ? "Done" : "LLM settings"}
             onClick={() => {
@@ -601,7 +606,7 @@ export function LlmPanel({
           >
             <GearIcon />
             <span>{showSettings ? "Done" : "Settings"}</span>
-          </button>
+          </button>}
         </div>
       }
     >

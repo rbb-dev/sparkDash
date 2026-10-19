@@ -45,8 +45,14 @@ const PASSWORD_ATTEMPTS_GLOBAL = 9;
 const httpError = (status, message, code) => Object.assign(new Error(message), { status, code });
 
 /** @param {object} spark registry entry */
+// mgllm: a Spark read through sparkdash-api (execUrl) has no SSH or sudo for these programs; its cap is mgllm's own
+// control beside the head unit's role pill (server/gpuClock.js), so this section steps aside there.
+export const EXEC_URL_REASON =
+  "This Spark is read through sparkdash-api: its GPU clock cap is the GPU control beside the head unit's role pill.";
+
 export function assertSupported(spark) {
   if (!spark) throw httpError(404, "Spark not found");
+  if (spark.execUrl) throw httpError(409, EXEC_URL_REASON);
   if (spark.kind === "host") throw httpError(400, "GPU clock caps are only supported on Spark units");
   if (spark.platform === "windows" || spark.platform === "darwin") {
     throw httpError(400, "GPU clock caps are only supported on Linux Spark units");
@@ -178,6 +184,7 @@ export class GpuClockManager {
 
   /** Read-only: hardware maximum, current cap, sudo availability, service state. */
   async status(spark) {
+    if (spark?.execUrl) return { supported: false, reason: EXEC_URL_REASON };   // mgllm: see assertSupported
     assertSupported(spark);
     const res = await this._exec(spark, buildStatusProgram(this._paths), STATUS_TIMEOUT_MS);
     if (res.RESULT !== "ok") {

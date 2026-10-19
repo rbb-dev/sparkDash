@@ -30,6 +30,9 @@ RUN npm ci --no-audit --no-fund \
 # `docker compose build --build-arg VITE_HISTORY_HOURS=4` or the env in compose.
 ARG VITE_HISTORY_HOURS=8
 ENV VITE_HISTORY_HOURS=${VITE_HISTORY_HOURS}
+# mgllm: the sub-path the dashboard is served under (vite.config.ts base)
+ARG VITE_BASE=/
+ENV VITE_BASE=${VITE_BASE}
 COPY . .
 RUN npm run build
 

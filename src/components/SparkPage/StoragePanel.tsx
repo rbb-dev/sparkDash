@@ -1,3 +1,4 @@
+import { useReadOnly } from "../../api/deployment";
 import { useState, useCallback } from "react";
 import type { StorageMetrics } from "../../api/types";
 import { updateDisabledDevices, refreshSparkMetric, updateSpark } from "../../api/client";
@@ -72,6 +73,7 @@ export function StoragePanel({
   onStoragePollModeChange,
 }: StoragePanelProps) {
   const [showSettings, setShowSettings] = useState(false);
+  const readOnly = useReadOnly(); // mgllm: refreshing and choosing devices write: hidden when read-only
   const [saving, setSaving] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
 
@@ -123,7 +125,7 @@ export function StoragePanel({
               r {formatBytesPerSec(totalRead)} · w {formatBytesPerSec(totalWrite)}
             </span>
           )}
-          <button
+          {!readOnly && <button
             type="button"
             onClick={handleRefresh}
             disabled={refreshing}
@@ -133,13 +135,13 @@ export function StoragePanel({
           >
             <RotateIcon className={`h-3 w-3 ${refreshing ? "animate-spin" : ""}`} />
             <span>{refreshing ? "Refreshing…" : "Refresh"}</span>
-          </button>
-          <SettingsButton
+          </button>}
+          {!readOnly && <SettingsButton
             active={showSettings}
             onClick={() => setShowSettings(!showSettings)}
             disabled={saving}
             label="Storage"
-          />
+          />}
         </div>
       }
     >

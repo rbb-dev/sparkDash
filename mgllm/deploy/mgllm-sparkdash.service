@@ -1,0 +1,20 @@
+# mgllm's sparkDash (mgllm in the mgllm repo), served by Caddy at /sparkdash/ behind /dashboard/'s password.
+# It listens on 127.0.0.1:5555 only (host network: it reaches the Sparks' sparkdash-api over the tunnel) and reads
+# /etc/sparkdash/env (root, 0600: the exec token). Installed by mgllm/scripts/deploy-gateway.sh.
+[Unit]
+Description=mgllm sparkDash (MiaAI-Lab/sparkDash + mgllm patches) at /sparkdash/
+After=docker.service network-online.target
+Requires=docker.service
+
+[Service]
+ExecStartPre=-/usr/bin/docker rm -f sparkdash
+ExecStart=/usr/bin/docker run --rm --name sparkdash --network host --user 1000:1000 \
+  --env-file /etc/sparkdash/env -v /var/lib/sparkdash/config:/app/config \
+  --read-only --tmpfs /tmp --memory 512m --cpus 1 --security-opt no-new-privileges \
+  sparkdash-mgllm:current
+ExecStop=/usr/bin/docker stop -t 10 sparkdash
+Restart=always
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target

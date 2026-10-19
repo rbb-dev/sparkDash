@@ -1,0 +1,22 @@
+# sparkdash-clock: set or release this Spark's GPU clock lock through NVML (sparkdash_clock.py), started by
+# sparkdash-clock.path. Root, because only root may lock clocks; nothing else: no network, a read-only system,
+# one writable place (/run/sparkdash-clock, kept until reboot, which clears the lock too).
+[Unit]
+Description=sparkdash-clock: set or release the GPU clock lock (root; started by sparkdash-clock.path)
+
+[Service]
+Type=oneshot
+ExecStart=/usr/bin/python3 /opt/sparkdash-api/sparkdash_clock.py
+RuntimeDirectory=sparkdash-clock
+RuntimeDirectoryMode=0755
+RuntimeDirectoryPreserve=yes
+PrivateNetwork=yes
+NoNewPrivileges=yes
+ProtectSystem=strict
+ProtectHome=yes
+PrivateTmp=yes
+ProtectKernelModules=yes
+ProtectControlGroups=yes
+RestrictSUIDSGID=yes
+LockPersonality=yes
+RestrictAddressFamilies=AF_UNIX

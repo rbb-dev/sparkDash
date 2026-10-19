@@ -1,3 +1,4 @@
+import { useReadOnly } from "../../api/deployment";
 import { useEffect, useRef, useState } from "react";
 import "../../styles/clearmenu.css";
 
@@ -73,6 +74,8 @@ export function ClearMenu<T>({
     }
   };
 
+  const readOnly = useReadOnly(); // mgllm: clearing history writes: hidden when read-only
+  if (readOnly) return null;
   return (
     <span className="ac-clear" ref={root}>
       <button

@@ -1,3 +1,4 @@
+import { useReadOnly } from "../../api/deployment";
 import { memo, useState } from "react";
 import type { SparkSnapshot } from "../../api/types";
 import { resolveSparkRole } from "../../api/sparkRole";
@@ -14,6 +15,7 @@ import { computeVramBreakdown, type VramBreakdownContext } from "../../shared/vr
 import { ImageIcon, PowerOnIcon } from "../ui/icons";
 import { formatCtx } from "./fleetStats";
 import { ModelLauncher } from "./ModelLauncher";
+import { ClockCap } from "./ClockCap";
 
 type Unit = "celsius" | "fahrenheit";
 
@@ -170,7 +172,8 @@ function SparkCardImpl({
     !llm && (memUsed >= 2048 || usage >= 10)
       ? `${formatMb(memUsed)} VRAM in use · GPU ${Math.round(usage)}%`
       : null;
-  const showLauncher = role !== "worker" && !llm && spark.llmMonitoring !== false && spark.platform !== "windows";
+  const readOnly = useReadOnly(); // mgllm: launching a model or waking a host writes: hidden when read-only
+  const showLauncher = !readOnly && role !== "worker" && !llm && spark.llmMonitoring !== false && spark.platform !== "windows";
 
   const showTps = role !== "worker" && !!llm;
   const isStrata = llm?.backend === "strata";
@@ -235,6 +238,7 @@ function SparkCardImpl({
           )}
         </h3>
         <Tag className="tag--role" tone={role === "head" ? "acc" : "neutral"} title={roleTitle}>{roleText}</Tag>
+        {role === "head" ? <ClockCap /> : null /* mgllm: the GPU clock cap for every unit (ClockCap.tsx) */}
         {spark.lanIp ? <span className="ov-sc__ip mono">{spark.lanIp}</span> : null}
       </div>
 
@@ -243,7 +247,7 @@ function SparkCardImpl({
       {!online || !gpu ? (
         <div className="ov-sc__off">
           <span>{online ? "Waiting for metrics…" : "Host unreachable"}</span>
-          {!online && spark.kind === "host" ? (
+          {!online && spark.kind === "host" && !readOnly ? (
             <button
               type="button"
               className="btn btn--primary btn--sm"

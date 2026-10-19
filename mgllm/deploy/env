@@ -1,0 +1,9 @@
+# /etc/sparkdash/env without its token (scripts/deploy-gateway.sh puts SPARKDASH_EXEC_TOKEN in front)
+SPARKDASH_EXEC_URL_PREFIXES=http://192.0.2.11:9701/sparkdashapi/,http://192.0.2.12:9701/sparkdashapi/
+SPARKDASH_ALLOWED_HOSTS=dashboard.example.com
+BIND_HOST=127.0.0.1
+PORT=5555
+LLM_PORT=8000
+# patch 0006: the app refuses writes itself, as Caddy does, except the GPU clock cap and Settings; the page hides the rest
+SPARKDASH_READ_ONLY=1
+SPARKDASH_WRITE_ALLOW=POST /api/gpu-clock,PUT /api/settings

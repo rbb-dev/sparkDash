@@ -624,6 +624,8 @@ export class SparkRegistry {
         typeof config.llmHost === "string" && config.llmHost.trim()
           ? config.llmHost.trim()
           : null,
+      /** mgllm: the unit's sparkdash-api exec URL; when set (and allowed), its lines go there instead of SSH. */
+      execUrl: typeof config.execUrl === "string" && config.execUrl.trim() ? config.execUrl.trim() : null,
       cx7Ip: config.cx7Ip || null,
       /** Optional user override for Wake-on-LAN. Empty → use detectedMacAddress. */
       macAddress: config.macAddress || null,

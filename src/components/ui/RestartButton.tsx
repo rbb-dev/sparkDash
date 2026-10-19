@@ -1,5 +1,7 @@
+import { useReadOnly } from "../../api/deployment";
 import { useEffect, useState } from "react";
 import { fetchRestartAvailable, restartServer } from "../../api/client";
+import { withBase } from "../../api/base";
 
 /** Wait for the server to go down and come back, then reload the page. */
 async function waitForRestart() {
@@ -8,7 +10,7 @@ async function waitForRestart() {
   while (Date.now() - started < 90_000) {
     await new Promise((r) => setTimeout(r, 1000));
     try {
-      const res = await fetch("/api/health", { cache: "no-store" });
+      const res = await fetch(withBase("/api/health"), { cache: "no-store" });
       if (res.ok && (sawDown || Date.now() - started > 8000)) return;
     } catch {
       sawDown = true;
@@ -29,7 +31,8 @@ export function RestartButton({ className = "btn btn--primary btn--sm" }: { clas
     return () => { cancelled = true; };
   }, []);
 
-  if (!available) return null;
+  const readOnly = useReadOnly(); // mgllm: restarting the server writes: hidden when read-only
+  if (!available || readOnly) return null;
 
   const run = async () => {
     setState("restarting");

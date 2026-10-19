@@ -1,3 +1,4 @@
+import { useReadOnly } from "../../api/deployment";
 import { BenchIcon } from "../bench/BenchIcon";
 import { useEffect, useMemo, useState, type MouseEvent } from "react";
 import {
@@ -232,7 +233,8 @@ export function AppSidebar({
     useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
     useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates, keyboardCodes: RAIL_KEYBOARD_CODES })
   );
-  const canReorder = Boolean(onReorder) && sparks.length > 1;
+  const readOnly = useReadOnly(); // mgllm: adding, reordering, benchmarks and Showcase write: hidden when read-only
+  const canReorder = !readOnly && Boolean(onReorder) && sparks.length > 1;
 
   const handleDragEnd = (event: DragEndEvent) => {
     markRailDrop();
@@ -286,9 +288,9 @@ export function AppSidebar({
       <div className="min-h-0">
         <div className="rail-label">
           <span>Sparks</span>
-          <button type="button" onClick={onAdd} title="Add Spark / GPU host" aria-label="Add Spark or GPU host">
+          {!readOnly && <button type="button" onClick={onAdd} title="Add Spark / GPU host" aria-label="Add Spark or GPU host">
             <PlusIcon className="h-3.5 w-3.5" />
-          </button>
+          </button>}
         </div>
         {canReorder ? (
           <DndContext
@@ -381,7 +383,7 @@ export function AppSidebar({
             <ListIcon className="h-4 w-4" />
             <span className="rail-item__name">Activity</span>
           </a>
-          <a
+          {!readOnly && <a
             href={idToPath(SHOWCASE_ID)}
             className={`rail-item ${activeId === SHOWCASE_ID ? "is-active" : ""}`}
             onClick={inApp(() => onSelect(SHOWCASE_ID))}
@@ -389,11 +391,11 @@ export function AppSidebar({
           >
             <TerminalIcon className="h-4 w-4" />
             <span className="rail-item__name">Showcase</span>
-          </a>
+          </a>}
         </nav>
       </div>
 
-      {onSelectTool ? (
+      {onSelectTool && !readOnly ? (   // mgllm: REA installs and runs tools on a unit
         <div>
           <button
             type="button"
@@ -424,7 +426,7 @@ export function AppSidebar({
         </div>
       ) : null}
 
-      {onSelectBench ? (
+      {onSelectBench && !readOnly ? (
         <div>
           <button
             type="button"

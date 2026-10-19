@@ -1,4 +1,5 @@
 import type { SparkSnapshot } from "../../api/types";
+import { withBase } from "../../api/base";
 import { isWorkerSpark } from "../../api/sparkRole";
 
 /** Live decode tok/s of the first reachable LLM on a Spark, or null. */
@@ -35,7 +36,7 @@ export function showcaseUrl(spark: SparkSnapshot): string {
   if (port) params.set("port", String(port));
   if (llm?.modelId) params.set("model", llm.modelId);
   const q = params.toString() ? `?${params.toString()}` : "";
-  return `/showcase/${encodeURIComponent(spark.id)}${q}`;
+  return withBase(`/showcase/${encodeURIComponent(spark.id)}${q}`);
 }
 
 export function openShowcase(spark: SparkSnapshot) {

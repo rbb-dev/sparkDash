@@ -1,3 +1,4 @@
+import { useReadOnly } from "../../api/deployment";
 import { useEffect, useMemo, useState } from "react";
 import type { AlertInstance, SparkSnapshot } from "../../api/types";
 import { isWorkerSpark } from "../../api/sparkRole";
@@ -61,6 +62,7 @@ export function OverviewPage({
   onSelectSpark,
   onNavigate,
 }: OverviewPageProps) {
+  const readOnly = useReadOnly(); // mgllm: Update Hermes, Wake all and Shut down all write: hidden when read-only
   const [query, setQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState<"all" | "online" | "offline" | "issues">("all");
   const withoutWorkers = useMemo(
@@ -253,7 +255,7 @@ export function OverviewPage({
               </div>
             </div>
           )}
-          {sparks.length > 0 && (
+          {sparks.length > 0 && !readOnly && (
             <>
               {hermesMonitoredCount > 0 && (
                 <button

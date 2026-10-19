@@ -1,3 +1,4 @@
+import { useReadOnly } from "../../api/deployment";
 import { useState } from "react";
 import type { SparkSnapshot } from "../../api/types";
 import { shutdownSpark, wakeSpark } from "../../api/client";
@@ -46,6 +47,7 @@ export function SparkActions({ spark, onEdit, className }: SparkActionsProps) {
   const [powerLoading, setPowerLoading] = useState(false);
   const [powerMsg, setPowerMsg] = useState<{ text: string; tone: "ok" | "err" } | null>(null);
   const [shutdownOpen, setShutdownOpen] = useState(false);
+  const readOnly = useReadOnly(); // mgllm: every action here writes, so a read-only deployment hides them all
 
   const hermes = spark.hermes;
   const hermesRunning = hermes?.status === "running";
@@ -92,6 +94,7 @@ export function SparkActions({ spark, onEdit, className }: SparkActionsProps) {
     }
   }
 
+  if (readOnly) return null;
   return (
     <>
       <div className={className}>

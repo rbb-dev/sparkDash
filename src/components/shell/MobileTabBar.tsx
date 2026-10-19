@@ -1,3 +1,4 @@
+import { useReadOnly } from "../../api/deployment";
 import { BenchIcon } from "../bench/BenchIcon";
 import { Fragment, useEffect, useRef, useState, type ReactNode } from "react";
 import { createPortal } from "react-dom";
@@ -24,6 +25,7 @@ interface MobileTabBarProps {
 
 /** Floating bottom tab bar for narrow screens (the fleet rail is hidden there). */
 export function MobileTabBar({ sparks, activeId, onSelect, onAdd, onOpenSettings }: MobileTabBarProps) {
+  const readOnly = useReadOnly(); // mgllm: benchmarks, Showcase and adding a Spark write: hidden when read-only
   const [sheetKind, setSheetKind] = useState<"sparks" | "stats" | null>(null);
   const sheet = sheetKind != null;
   // Closing plays a slide-down first; the sheet unmounts when it has finished.
@@ -123,28 +125,32 @@ export function MobileTabBar({ sparks, activeId, onSelect, onAdd, onOpenSettings
                     ] as const).map(([id, label, icon]) => pageButton(id, label, icon))
                   ) : (
                     <>
-                  <div className="rail-label rail-label--spaced">
-                    <span>Tools</span>
-                  </div>
-                  {TOOL_TYPES.map((t) => (
-                    <button
-                      key={t.id}
-                      type="button"
-                      className={`rail-item rail-item--compact ${toolTypeOf(activeId) === t.id ? "is-active" : ""}`}
-                      aria-current={toolTypeOf(activeId) === t.id ? "page" : undefined}
-                      onClick={() => {
-                        setSheet(false);
-                        onSelect(toolId(t.id));
-                      }}
-                    >
-                      <MicroscopeIcon className="h-3.5 w-3.5" />
-                      <span className="rail-item__name">{t.label}</span>
-                    </button>
-                  ))}
-                  <div className="rail-label rail-label--spaced">
+                  {!readOnly && (   // mgllm: REA installs and runs tools on a unit
+                    <>
+                      <div className="rail-label rail-label--spaced">
+                        <span>Tools</span>
+                      </div>
+                      {TOOL_TYPES.map((t) => (
+                        <button
+                          key={t.id}
+                          type="button"
+                          className={`rail-item rail-item--compact ${toolTypeOf(activeId) === t.id ? "is-active" : ""}`}
+                          aria-current={toolTypeOf(activeId) === t.id ? "page" : undefined}
+                          onClick={() => {
+                            setSheet(false);
+                            onSelect(toolId(t.id));
+                          }}
+                        >
+                          <MicroscopeIcon className="h-3.5 w-3.5" />
+                          <span className="rail-item__name">{t.label}</span>
+                        </button>
+                      ))}
+                    </>
+                  )}
+                  {!readOnly && <div className="rail-label rail-label--spaced">
                     <span>Benchmarks</span>
-                  </div>
-                  {BENCH_TYPES.map((b) => (
+                  </div>}
+                  {!readOnly && BENCH_TYPES.map((b) => (
                     <Fragment key={b.id}>
                       <button
                         type="button"
@@ -180,7 +186,7 @@ export function MobileTabBar({ sparks, activeId, onSelect, onAdd, onOpenSettings
                       <span className="rail-item__sub">{railSubLabel(s)}</span>
                     </button>
                   ))}
-                  <button
+                  {!readOnly && <button
                     type="button"
                     className="rail-item"
                     onClick={() => {
@@ -190,7 +196,7 @@ export function MobileTabBar({ sparks, activeId, onSelect, onAdd, onOpenSettings
                   >
                     <PlusIcon className="h-4 w-4" />
                     <span className="rail-item__name">Add Spark / GPU host</span>
-                  </button>
+                  </button>}
                   <div className="rail-label rail-label--spaced">
                     <span>Fleet</span>
                   </div>

@@ -477,3 +477,18 @@ test("_applyTensorFoldMetrics: /metrics-only builds get decode tok/s from total 
   await probe._applyTensorFoldMetrics(2);
   assert.equal(probe.generationTps, 0);
 });
+
+// mgllm: TensorFold has no sleep mode; its weights stay loaded while the server answers, as SGLang's and q27's do
+test("probe: a reachable TensorFold reads Active on the Engine tile; an unreachable one stays unknown", async () => {
+  const probe = new LlmProbe({ lanIp: "10.0.0.1" }, 8888);
+  let healthy = true;
+  probe._fetch = async (url) => {
+    const u = String(url);
+    if (u.endsWith("/v1/models")) return jsonRes(CUDA_MODELS);
+    if (u.endsWith("/health")) return healthy ? jsonRes({ ok: true }) : jsonRes({}, 503);
+    return notFound();
+  };
+  assert.equal((await probe.probe()).gpuMemoryUtilization, 1);
+  healthy = false;
+  assert.equal((await probe.probe()).gpuMemoryUtilization, null);
+});

@@ -6,13 +6,14 @@
  */
 import type { LlmTokenRange, LlmTokenTotalsResponse } from "./llmTokenTypes";
 import { authHeaders, reportAuthRequired } from "./authToken";
+import { withBase } from "./base";
 
 export function fetchLlmTokenTotals(range?: LlmTokenRange): Promise<LlmTokenTotalsResponse> {
   return apiFetch(range && range !== "all" ? `/api/llm-token-totals?range=${range}` : "/api/llm-token-totals");
 }
 
 async function apiFetch<T>(path: string, opts?: RequestInit): Promise<T> {
-  const res = await fetch(path, { headers: { ...authHeaders(), ...(opts?.headers as Record<string, string> | undefined) } });
+  const res = await fetch(withBase(path), { headers: { ...authHeaders(), ...(opts?.headers as Record<string, string> | undefined) } });
   if (!res.ok) {
     if (res.status === 401) reportAuthRequired();
     const body = await res.json().catch(() => ({ error: res.statusText }));

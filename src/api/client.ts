@@ -54,8 +54,9 @@ import type {
 } from "./types";
 import { VulnHuntApiError } from "./types";
 import { authHeaders, reportAuthRequired } from "./authToken";
+import { withBase } from "./base";
 
-const BASE = "";
+const BASE = withBase(""); // mgllm: "" at "/", "/sparkdash" under that sub-path
 
 // ─── Generic fetch wrapper ────────────────────────────────
 async function apiFetch<T>(path: string, opts?: RequestInit): Promise<T> {

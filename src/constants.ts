@@ -1,3 +1,5 @@
+import { stripBase, withBase } from "./api/base";
+
 /** Reserved tab id for the cross-Spark overview (not a real Spark). */
 export const OVERVIEW_ID = "__overview__";
 /** Reserved ids for the dedicated fleet pages. */
@@ -43,8 +45,12 @@ export function isPageId(id: string | null | undefined): boolean {
   return Boolean(id) && (id! in FIXED_PATHS || id!.startsWith(BENCH_PREFIX) || id!.startsWith(TOOLS_PREFIX));
 }
 
-/** URL path for an active id (a Spark id gets its detail page; null is the overview). */
+/** URL path for an active id (a Spark id gets its detail page; null is the overview), under the page's base (mgllm). */
 export function idToPath(id: string | null): string {
+  return withBase(appPath(id));
+}
+
+function appPath(id: string | null): string {
   if (!id) return "/";
   if (id in FIXED_PATHS) return FIXED_PATHS[id];
   const bench = benchTypeOf(id);
@@ -55,7 +61,8 @@ export function idToPath(id: string | null): string {
 }
 
 /** Active id for a URL path, or null when the path is not an app page (e.g. /showcase/...). */
-export function pathToId(pathname: string): string | null {
+export function pathToId(fullPathname: string): string | null {
+  const pathname = stripBase(fullPathname); // mgllm: the page may be served under a sub-path (src/api/base.ts)
   if (pathname.startsWith("/showcase/")) return null;
   for (const [id, p] of Object.entries(FIXED_PATHS)) {
     if (p !== "/" && (pathname === p || pathname === `${p}/`)) return id;

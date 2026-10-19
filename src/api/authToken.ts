@@ -1,3 +1,5 @@
+import { withBase } from "./base";
+
 /**
  * The browser's copy of the server's access token (SPARKDASH_TOKEN).
  *
@@ -102,7 +104,7 @@ export interface AuthStatus {
  * even when the token is missing or wrong.
  */
 export async function fetchAuthStatus(token: string = getToken()): Promise<AuthStatus> {
-  const res = await fetch("/api/auth/status", { headers: authHeaders(token) });
+  const res = await fetch(withBase("/api/auth/status"), { headers: authHeaders(token) });
   if (!res.ok) throw new Error(`HTTP ${res.status}`);
   const body = (await res.json()) as Partial<AuthStatus>;
   return { tokenRequired: Boolean(body.tokenRequired), authenticated: Boolean(body.authenticated) };

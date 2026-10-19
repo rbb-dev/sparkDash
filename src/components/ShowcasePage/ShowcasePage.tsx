@@ -16,6 +16,7 @@ import type {
   SparkConfig,
 } from "../../api/types";
 import { isLlmMonitoringEnabled } from "../../api/sparkRole";
+import { withBase } from "../../api/base";
 import { BoltIcon } from "../ui/icons";
 import { ThemeSwitch } from "../ThemeSwitch";
 import { TerminalCard } from "./TerminalCard";
@@ -800,7 +801,7 @@ export function ShowcasePage({ sparkId, embedded = false }: ShowcasePageProps) {
       {!barVisible ? (
         <div className="showcase-config-peek">
           <div className="showcase-config__title">
-            <a href="/" className="logo-pill showcase-brand" title="sparkDash home">
+            <a href={withBase("/")} className="logo-pill showcase-brand" title="sparkDash home">
               <BoltIcon className="showcase-brand__bolt" />
               <span>
                 spark<span className="logo-pill-dash">Dash</span>
@@ -852,7 +853,7 @@ export function ShowcasePage({ sparkId, embedded = false }: ShowcasePageProps) {
       <div className={`showcase-config${configOpen ? "" : " is-collapsed"}`}>
         <div className="showcase-config__bar">
           <div className="showcase-config__title">
-            <a href="/" className="logo-pill showcase-brand" title="sparkDash home">
+            <a href={withBase("/")} className="logo-pill showcase-brand" title="sparkDash home">
               <BoltIcon className="showcase-brand__bolt" />
               <span>
                 spark<span className="logo-pill-dash">Dash</span>

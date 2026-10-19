@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState, useCallback } from "react";
 import type { AlertInstance, SparkSnapshot, WsSnapshot } from "../api/types";
+import { withBase } from "../api/base";
 import { ingestSnapshots } from "./metricsStore";
 import { initialActiveId } from "../constants";
 import { fetchAuthStatus, getToken, onTokenChange, reportAuthRequired } from "../api/authToken";
@@ -9,7 +10,7 @@ const RECONNECT_DELAY = 2000;
 /** Built per connect so a token saved from the dialog is used on the next socket. */
 function wsUrl(): string {
   const token = getToken();
-  return `${location.protocol === "https:" ? "wss:" : "ws:"}//${location.host}/ws${token ? `?token=${encodeURIComponent(token)}` : ""}`;
+  return `${location.protocol === "https:" ? "wss:" : "ws:"}//${location.host}${withBase("/ws")}${token ? `?token=${encodeURIComponent(token)}` : ""}`;
 }
 
 /**

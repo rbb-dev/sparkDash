@@ -292,6 +292,58 @@ export function remoteArgvFor(spark, cmd) {
   return [spark?.platform === "windows" ? powershellCommand(cmd) : cmd];
 }
 
+/**
+ * mgllm: a unit with `execUrl` is read through its sparkdash-api (mgllm/sparkdash in rbb-dev's mgllm repo), which
+ * answers each known line from the files and the driver it reads: no SSH, no shell on the unit. The line goes as
+ * POST {"cmd": line}; the answer is what the line prints; a refusal or a failed source rejects, as a failed command
+ * does. Only URLs under SPARKDASH_EXEC_URL_PREFIXES (comma separated) are used, so the bearer token
+ * (SPARKDASH_EXEC_TOKEN) never leaves for a URL someone typed into a unit's settings.
+ */
+function allowedExecUrl(raw) {
+  // Parsed, never compared as text: the origin must equal an allowed prefix's and the path start with its path, and
+  // a URL with a user or password is refused (http://allowed:port@elsewhere/ is a request to elsewhere).
+  let url;
+  try {
+    url = new URL(raw);
+  } catch {
+    return null;
+  }
+  if (url.username || url.password || !/^https?:$/.test(url.protocol)) return null;
+  const prefixes = (process.env.SPARKDASH_EXEC_URL_PREFIXES || "").split(",").map((s) => s.trim()).filter(Boolean);
+  const ok = prefixes.some((p) => {
+    try {
+      const allowed = new URL(p);
+      return url.origin === allowed.origin && url.pathname.startsWith(allowed.pathname);
+    } catch {
+      return false;
+    }
+  });
+  return ok ? url.href : null;
+}
+
+async function execOverHttp(execUrl, cmd, timeoutMs) {
+  const url = allowedExecUrl(execUrl);
+  if (!url) throw new Error(`exec URL ${execUrl} is not under SPARKDASH_EXEC_URL_PREFIXES`);
+  const headers = { "Content-Type": "application/json" };
+  if (process.env.SPARKDASH_EXEC_TOKEN) headers.Authorization = `Bearer ${process.env.SPARKDASH_EXEC_TOKEN}`;
+  let res;
+  try {
+    // the URL just checked is the one called, and no redirect takes the token elsewhere
+    res = await fetch(url, {
+      method: "POST",
+      headers,
+      body: JSON.stringify({ cmd }),
+      redirect: "error",
+      signal: AbortSignal.timeout(timeoutMs),
+    });
+  } catch (err) {
+    throw new Error(`sparkdash-api ${url} unreachable: ${err?.message || err}`);
+  }
+  const text = await res.text();
+  if (!res.ok) throw new Error(`sparkdash-api ${url} answered ${res.status}: ${text.slice(0, 200)}`);
+  return text.trim();
+}
+
 export async function sshExec(spark, cmd, options = {}) {
   const timeoutMs =
     Number.isFinite(options.timeoutMs) && options.timeoutMs > 0 ? options.timeoutMs : 10000;
@@ -299,6 +351,8 @@ export async function sshExec(spark, cmd, options = {}) {
   if (typeof cmd !== "string" || !cmd) {
     throw new Error("SSH command must be a non-empty string");
   }
+  // mgllm: a unit with execUrl answers over HTTP (its sparkdash-api) instead of SSH
+  if (spark?.execUrl) return execOverHttp(spark.execUrl, cmd, timeoutMs);
 
   // Windows OpenSSH hands the command to cmd.exe or PowerShell, never bash.
   const isWindows = spark?.platform === "windows";

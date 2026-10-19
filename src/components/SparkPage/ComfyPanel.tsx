@@ -1,3 +1,4 @@
+import { useReadOnly } from "../../api/deployment";
 import { useState, useCallback, type MouseEvent } from "react";
 import type { ComfyJob, ComfyMetrics, ComfyProgress } from "../../api/types";
 import { cancelComfyJob } from "../../api/client";
@@ -138,6 +139,7 @@ function JobBlock({
   onCancel?: () => void;
   cancelling?: boolean;
 }) {
+  const readOnly = useReadOnly(); // mgllm: cancelling a job writes: hidden when read-only
   const title = job.title?.trim() || shortId(job.id);
   const footprint = jobFootprint(job);
   const elapsed = variant === "running" ? formatElapsed(job.createTime) : null;
@@ -164,7 +166,7 @@ function JobBlock({
             {title}
           </p>
         </div>
-        {onCancel ? (
+        {onCancel && !readOnly ? (
           <button
             type="button"
             onClick={onCancel}

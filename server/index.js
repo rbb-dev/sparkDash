@@ -71,6 +71,8 @@ import { ReaStore } from "./rea/ReaStore.js";
 import { ReaManager } from "./rea/ReaManager.js";
 import { registerReaRoutes } from "./rea/routes.js";
 import { registerReaUploadRoutes } from "./rea/uploads.js";
+import { registerGpuClockRoutes as registerExecUrlGpuClockRoutes } from "./gpuClock.js";   // mgllm: Sparks read through sparkdash-api
+import { createReadOnlyMiddleware, readOnlyConfig, registerDeploymentRoute } from "./readOnly.js";
 import { benchEvent } from "./events/eventFormat.js";
 import {
   createFleetEnergyRuntime,
@@ -523,6 +525,11 @@ const reaDeps = {
   principalKey,
   rejectLimited,
 };
+// mgllm: a read-only deployment refuses writes outside SPARKDASH_WRITE_ALLOW (server/readOnly.js). Installed before
+// every route that writes, these uploads included (they come ahead of express.json and the auth middleware); it
+// reads only the method and the path, never the body.
+const readOnly = readOnlyConfig();
+app.use(createReadOnlyMiddleware(readOnly));
 registerReaUploadRoutes(app, { ...reaDeps, authMiddleware: createAuthMiddleware() });
 
 app.use(express.json());
@@ -532,6 +539,8 @@ app.get("/api/auth/status", createHostGuardMiddleware(), (req, res) => {
   res.json(authStatus(req));
 });
 app.use(createAuthMiddleware());
+// mgllm: which writes this deployment allows (server/readOnly.js), for the page to hide the others
+registerDeploymentRoute(app, readOnly);
 
 /** Fleet event log, newest first. Query: limit, sparkId, sinceId. */
 app.get("/api/events", (req, res) => {
@@ -880,6 +889,13 @@ registerVulnHuntRoutes(app, {
   store: vulnHuntStore,
   allowRun: allowVulnHunt,
   principalKey,
+  rejectLimited,
+});
+
+// mgllm: the GPU clock control (server/gpuClock.js), limited as the other destructive routes are
+registerExecUrlGpuClockRoutes(app, {
+  registry,
+  allowChange: (req) => allowDestructive(principalKey(req)) && allowGlobalDestructive(clientKey(req)),
   rejectLimited,
 });
 

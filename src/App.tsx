@@ -65,6 +65,7 @@ import type { AuthMode, Settings, SparkSnapshot } from "./api/types";
 import { AccessTokenPrompt } from "./components/AccessTokenDialog";
 import { onTokenChange } from "./api/authToken";
 import { isWorkerSpark } from "./api/sparkRole";
+import { useReadOnly } from "./api/deployment";   // mgllm: read-only deployments
 
 /** Keep hidden worker ids in their original slots when the visible tabs are reordered. */
 function mergeTabOrderKeepingHidden(
@@ -267,6 +268,9 @@ function DashboardApp() {
   const onPage = isPageId(activeId);
   const benchType = benchTypeOf(activeId);
   const toolType = toolTypeOf(activeId);
+  // mgllm: a read-only deployment shows no tool or benchmark page (each starts, installs or changes something on a
+  // Spark); the sidebar hides their entries, and this covers a link or a typed address
+  const readOnly = useReadOnly();
   const hideWorkers = settings?.hideWorkers ?? false;
   // Charts read the time zone from a module value; set it before the pages render, and
   // re-key <main> below so a change in Settings redraws them.
@@ -574,10 +578,16 @@ function DashboardApp() {
                 <ActivityPage sparks={displaySparks} onSelectSpark={navigate} />
               ) : activeId === SHOWCASE_ID ? (
                 <ShowcaseView sparks={displaySparks} />
-              ) : toolType ? (
-                <ToolsPage type={toolType} sparks={displaySparks} />
-              ) : benchType ? (
-                <BenchPage type={benchType} sparks={displaySparks} benchShareImage={settings?.benchShareImage ?? false} />
+              ) : toolType || benchType ? (
+                readOnly ? (
+                  <p className="field-hint" style={{ padding: "2rem" }}>
+                    This sparkDash is read-only: tools and benchmarks change a Spark, so they are not offered here.
+                  </p>
+                ) : toolType ? (
+                  <ToolsPage type={toolType} sparks={displaySparks} />
+                ) : (
+                  <BenchPage type={benchType!} sparks={displaySparks} benchShareImage={settings?.benchShareImage ?? false} />
+                )
               ) : isOverview ? (
                 <OverviewPage
                   sparks={displaySparks}

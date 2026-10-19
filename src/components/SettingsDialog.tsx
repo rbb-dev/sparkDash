@@ -3,12 +3,14 @@ import { isValidTimeZone, listTimeZones } from "../shared/timeZone";
 import { fetchSettings, updateSettings } from "../api/client";
 import { clearToken, getToken, onTokenChange, requestTokenPrompt } from "../api/authToken";
 import type { Settings } from "../api/types";
+import { withBase } from "../api/base";
 import { useModalPresence } from "../hooks/useModalPresence";
 import { useOverlayClose } from "../hooks/useOverlayClose";
 import packageJson from "../../package.json";
 import { XIcon } from "./ui/icons";
 import { SettingRow, ToggleRow } from "./SettingRows";
 import { AlertsDialog } from "./AlertsDialog";
+import { useCanWrite } from "../api/deployment";
 import { BrowserAlertsSettings } from "./BrowserAlertsSettings";
 import "../styles/dialogs.css";
 
@@ -78,6 +80,7 @@ export function SettingsDialog({ open, onClose, onSaved }: SettingsDialogProps) 
   const [theme, setTheme] = useState<ThemeId>(readTheme);
   const [tokenSet, setTokenSet] = useState(() => getToken() !== "");
   const [showAlerts, setShowAlerts] = useState(false);
+  const canConfigureAlerts = useCanWrite("PUT", "/api/alerts/config");   // mgllm: a read-only deployment may refuse it
 
   // While the Alerts dialog is open on top, Escape belongs to it alone.
   const closeOnEscape = useCallback(() => {
@@ -349,7 +352,7 @@ export function SettingsDialog({ open, onClose, onSaved }: SettingsDialogProps) 
               />
               <ToggleRow
                 title="Prometheus metrics"
-                help={`Serves every unit's metrics for Prometheus / Grafana to scrape at ${window.location.origin}/metrics. Off by default.`}
+                help={`Serves every unit's metrics for Prometheus / Grafana to scrape at ${window.location.origin}${withBase("/metrics")}. Off by default.`}
                 checked={Boolean(settings.prometheusExport)}
                 onChange={(v) => update({ prometheusExport: v })}
               />
@@ -468,9 +471,11 @@ export function SettingsDialog({ open, onClose, onSaved }: SettingsDialogProps) 
                     <i aria-hidden />
                     {settings.alertsEnabled ? "On" : "Off"}
                   </span>
-                  <button type="button" className="btn btn--sm" onClick={() => setShowAlerts(true)}>
-                    Configure…
-                  </button>
+                  {canConfigureAlerts ? (   // mgllm: hidden where the server refuses the alerts config's save
+                    <button type="button" className="btn btn--sm" onClick={() => setShowAlerts(true)}>
+                      Configure…
+                    </button>
+                  ) : null}
                 </div>
               </SettingRow>
               <BrowserAlertsSettings />
